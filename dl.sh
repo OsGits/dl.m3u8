@@ -31,7 +31,7 @@ show_menu() {
     echo "========================================"
     echo "  M3U8下载工具菜单"
     echo "  脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "  当前版本：v2601.0301.30   最新版本：$latest_version"
+    echo "  当前版本：v2601.0301.55   最新版本：$latest_version"
     echo "  下次打开直接输入   ./dl.sh"
     echo "========================================"
     echo "1: M3u8资源下载"
@@ -297,9 +297,12 @@ env_install() {
     echo "安装完成！版本信息："
     N_m3u8DL-RE --version
     echo ""
-    echo "⚠️  提示：内容已更新，务必返回菜单，进行'使用配置'！"
+    echo "⚠️  提示：内容已更新，务必返回菜单，进行'使用配置'！如果是更新，只需重启脚本即可！"
     
-    read -p "按任意键返回菜单..." -n1 -s
+    read -p "按任意键重启脚本..." -n1 -s
+    echo ""
+    echo "正在重启脚本..."
+    exec ./dl.sh
 }
 
 # 功能3: 使用配置(必须)
