@@ -28,14 +28,14 @@ show_menu() {
     echo "========================================"
     echo "    M3U8下载工具菜单"
     echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v0.1.0   最新版本：$latest_version"
+    echo "    当前版本：v2601.0300.08   最新版本：$latest_version"
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 查看下载进程"
-    echo "3: 使用配置(首次使用第1步)"
-    echo "4: 环境一键配置(首次使用第2步)"
-    echo "5: 停止下载进程"
-    echo "6: 更新脚本"
+    echo "3: 更新脚本"
+    echo "4: 使用配置(首次使用第2步)"
+    echo "5: 环境一键配置(首次使用第1步)"
+    echo "6: 停止下载进程"
     echo "7: 删除脚本(谨慎操作)"
     echo "8: 退出"
     echo "========================================"
@@ -88,7 +88,7 @@ view_download_process() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能2: 环境一键安装
+# 功能5: 环境一键安装
 env_install() {
     echo "========================================"
     echo "          环境一键安装"
@@ -129,6 +129,23 @@ env_install() {
     mkdir -p "$OUTPUT_DIR"
     mkdir -p "$TXT_DIR"
     
+    # 下载GitHub资源
+    echo ""
+    echo "正在下载GitHub资源..."
+    echo "下载地址：https://raw.githubusercontent.com/OsGits/dl.m3u8/main/"
+    
+    # 下载dl.sh脚本到/root目录
+    echo "正在下载dl.sh脚本到/root目录..."
+    if command -v curl &> /dev/null; then
+        curl -s -o /root/dl.sh https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh
+    elif command -v wget &> /dev/null; then
+        wget -q -O /root/dl.sh https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh
+    fi
+    
+    # 添加执行权限
+    chmod +x /root/dl.sh
+    echo "✓ dl.sh脚本已下载到/root目录并添加了执行权限！"
+    
     # 验证安装
     echo "========================================"
     echo "安装完成！版本信息："
@@ -137,7 +154,7 @@ env_install() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能3: 使用配置(必须)
+# 功能4: 使用配置(必须)
 config_setup() {
     echo "========================================"
     echo "          使用配置(必须)"
@@ -171,12 +188,29 @@ config_setup() {
     
     # 使用sed命令更新配置（兼容不同系统）
     if command -v sed &> /dev/null; then
+        # 更新主脚本配置
+        echo "正在更新dl.m3u8.sh配置..."
         # 更新OUTPUT_DIR
         sed -i "s|^OUTPUT_DIR=.*|OUTPUT_DIR=\"$OUTPUT_DIR\"|" "$0"
         # 更新TXT_DIR
         sed -i "s|^TXT_DIR=.*|TXT_DIR=\"$TXT_DIR\"|" "$0"
         # 更新TXT_URL
         sed -i "s|^TXT_URL=.*|TXT_URL=\"$TXT_URL\"|" "$0"
+        
+        # 更新dl.sh配置
+        echo "正在更新dl.sh配置..."
+        local dlsh_path="/root/dl.sh"
+        if [ -f "$dlsh_path" ]; then
+            # 更新OUTPUT_DIR
+            sed -i "s|^OUTPUT_DIR=.*|OUTPUT_DIR=\"$OUTPUT_DIR\"|" "$dlsh_path"
+            # 更新LOG_DIR（由TXT_DIR派生）
+            sed -i "s|^LOG_DIR=.*|LOG_DIR=\"$TXT_DIR/Log\"|" "$dlsh_path"
+            # 更新TXT_URL
+            sed -i "s|^TXT_URL=.*|TXT_URL=\"$TXT_URL\"|" "$dlsh_path"
+            echo "dl.sh配置更新成功！"
+        else
+            echo "警告：未找到dl.sh文件，跳过dl.sh配置更新！"
+        fi
         
         echo "配置保存成功！"
     else
@@ -193,7 +227,7 @@ config_setup() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能4: 停止下载进程
+# 功能6: 停止下载进程
 stop_download() {
     echo "========================================"
     echo "          停止下载进程"
@@ -270,7 +304,7 @@ stop_download() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能5: 更新脚本
+# 功能3: 更新脚本
 update_script() {
     echo "========================================"
     echo "          更新脚本"
@@ -336,6 +370,39 @@ update_script() {
         return
     fi
     
+    # 更新dl.sh脚本
+    echo ""
+    echo "========================================"
+    echo "正在更新dl.sh脚本..."
+    echo "下载地址：https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh"
+    echo ""
+    
+    local dlsh_url="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh"
+    local dlsh_path="/root/dl.sh"
+    
+    if command -v curl &> /dev/null; then
+        if curl -s -o "$dlsh_path" "$dlsh_url"; then
+            echo "✓ dl.sh脚本下载成功！"
+        else
+            echo "✗ dl.sh脚本下载失败！"
+        fi
+    elif command -v wget &> /dev/null; then
+        if wget -q -O "$dlsh_path" "$dlsh_url"; then
+            echo "✓ dl.sh脚本下载成功！"
+        else
+            echo "✗ dl.sh脚本下载失败！"
+        fi
+    else
+        echo "✗ 未安装 curl 或 wget，无法下载dl.sh脚本！"
+    fi
+    
+    # 为dl.sh添加执行权限
+    if chmod +x "$dlsh_path"; then
+        echo "✓ dl.sh脚本已添加可执行权限！"
+    else
+        echo "✗ dl.sh脚本添加执行权限失败！"
+    fi
+    
     echo ""
     echo "========================================"
     echo "脚本更新完成！"
@@ -349,7 +416,7 @@ update_script() {
     exit 0
 }
 
-# 功能6: 删除脚本(谨慎操作)
+# 功能7: 删除脚本(谨慎操作)
 uninstall_script() {
     echo "========================================"
     echo "          删除脚本(谨慎操作)"
@@ -456,16 +523,16 @@ main() {
                 view_download_process
                 ;;
             3)
-                config_setup
+                update_script
                 ;;
             4)
-                env_install
+                config_setup
                 ;;
             5)
-                stop_download
+                env_install
                 ;;
             6)
-                update_script
+                stop_download
                 ;;
             7)
                 uninstall_script
