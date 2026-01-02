@@ -31,7 +31,7 @@ show_menu() {
     echo "========================================"
     echo "  M3U8下载工具菜单"
     echo "  脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "  当前版本：v2601.0301.16   最新版本：$latest_version"
+    echo "  当前版本：v2601.0301.22   最新版本：$latest_version"
     echo "  下次打开直接输入   ./dl.sh"
     echo "========================================"
     echo "1: M3u8资源下载"
@@ -246,17 +246,37 @@ env_install() {
     echo "正在下载GitHub资源..."
     echo "下载地址：https://raw.githubusercontent.com/OsGits/dl.m3u8/main/"
     
-    # 下载N_m3u8DL-RE.sh脚本到/root目录
+    # 下载N_m3u8DL-RE.sh脚本到/root目录（强制覆盖）
     echo "正在下载N_m3u8DL-RE.sh脚本到/root目录..."
     if command -v curl &> /dev/null; then
-        curl -s -o /root/N_m3u8DL-RE.sh https://raw.githubusercontent.com/OsGits/dl.m3u8/main/N_m3u8DL-RE.sh
+        curl -s -f -L -o /root/N_m3u8DL-RE.sh https://raw.githubusercontent.com/OsGits/dl.m3u8/main/N_m3u8DL-RE.sh
     elif command -v wget &> /dev/null; then
-        wget -q -O /root/N_m3u8DL-RE.sh https://raw.githubusercontent.com/OsGits/dl.m3u8/main/N_m3u8DL-RE.sh
+        wget -q -O /root/N_m3u8DL-RE.sh --no-hsts https://raw.githubusercontent.com/OsGits/dl.m3u8/main/N_m3u8DL-RE.sh
     fi
     
     # 添加执行权限
     chmod +x /root/N_m3u8DL-RE.sh
     echo "✓ N_m3u8DL-RE.sh脚本已下载到/root目录并添加了执行权限！"
+    
+    # 下载dl.sh脚本（强制覆盖）
+    echo "正在下载dl.sh脚本到当前目录..."
+    local script_path="$0"
+    local temp_script="${script_path}.tmp"
+    
+    if command -v curl &> /dev/null; then
+        curl -s -f -L -o "$temp_script" https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh
+    elif command -v wget &> /dev/null; then
+        wget -q -O "$temp_script" --no-hsts https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh
+    fi
+    
+    # 覆盖原脚本并添加执行权限
+    if [ -f "$temp_script" ]; then
+        chmod +x "$temp_script"
+        mv -f "$temp_script" "$script_path"
+        echo "✓ dl.sh脚本已下载并覆盖当前脚本！"
+    else
+        echo "✗ dl.sh脚本下载失败，跳过覆盖！"
+    fi
     
     # 验证安装
     echo "========================================"
