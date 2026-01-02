@@ -8,9 +8,6 @@ TXT_DIR="/www/OssOpen/TXTOss"
 TXT_URL="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/cs.txt"
 
 # 以下类容建议不要修改！
-LOG_DIR="$TXT_DIR/Log"
-DOWNLOAD_LOG="$LOG_DIR/download.log"
-
 # 显示菜单函数
 show_menu() {
     clear
@@ -31,17 +28,18 @@ show_menu() {
     echo "========================================"
     echo "    M3U8下载工具菜单"
     echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v0.0.7   最新版本：$latest_version"
+    echo "    当前版本：v0.1.0   最新版本：$latest_version"
     echo "========================================"
     echo "1: M3u8资源下载"
-    echo "2: 使用配置(首次使用第1步)"
-    echo "3: 环境一键配置(首次使用第2步)"
-    echo "4: 停止下载进程"
-    echo "5: 更新脚本"
-    echo "6: 删除脚本(谨慎操作)"
-    echo "7: 退出"
+    echo "2: 查看下载进程"
+    echo "3: 使用配置(首次使用第1步)"
+    echo "4: 环境一键配置(首次使用第2步)"
+    echo "5: 停止下载进程"
+    echo "6: 更新脚本"
+    echo "7: 删除脚本(谨慎操作)"
+    echo "8: 退出"
     echo "========================================"
-    echo -n "请选择操作 (1-7): "
+    echo -n "请选择操作 (1-8): "
 }
 
 # 功能1: M3u8资源下载
@@ -50,111 +48,43 @@ m3u8_download() {
     echo "          M3u8资源下载"
     echo "========================================"
     
-    # 创建一个数组来存储所有下载的文件名，用于后续清理临时文件夹
-    local DOWNLOADED_FILENAMES=()
-    
     # 创建目录
     mkdir -p "$OUTPUT_DIR"
-    mkdir -p "$LOG_DIR"
     
-    # 下载远程TXT文件到临时目录
-    TMP_FILE="$LOG_DIR/$(basename "$TXT_URL")"
-    if command -v curl &> /dev/null; then
-        curl -s -o "$TMP_FILE" "$TXT_URL"
-    elif command -v wget &> /dev/null; then
-        wget -q -O "$TMP_FILE" "$TXT_URL"
-    else
-        echo "错误：未安装 curl 或 wget！"
-        read -p "按任意键返回菜单..." -n1 -s
-        return
-    fi
+    echo "正在启动下载进程..."
+    echo "命令: nohup ./dl.sh &"
+    echo ""
     
-    if [ ! -s "$TMP_FILE" ]; then
-        echo "错误：下载 $TXT_URL 失败！"
-        read -p "按任意键返回菜单..." -n1 -s
-        return
-    fi
+    # 运行下载命令
+    nohup ./dl.sh &
     
-    TXT_FILE="$TMP_FILE"
-    
-    # 检查 N_m3u8DL-RE 是否存在
-    if ! command -v N_m3u8DL-RE &> /dev/null; then
-        echo "错误：N_m3u8DL-RE 未安装或不在 PATH 中！"
-        read -p "按任意键返回菜单..." -n1 -s
-        return
-    fi
-    
-    # 读取 TXT 文件并下载
-    while read -r LINE; do
-        # 跳过空行
-        if [ -z "$LINE" ]; then
-            continue
-        fi
-        
-        # 分割 M3U8_URL 和 FILENAME（假设第一个空格后面是文件名）
-        M3U8_URL=$(echo "$LINE" | cut -d ' ' -f1)
-        FILENAME=$(echo "$LINE" | cut -d ' ' -f2-)
-        
-        if [ -z "$M3U8_URL" ] || [ -z "$FILENAME" ]; then
-            continue
-        fi
-        
-        # 将文件名添加到数组，用于后续统一清理临时文件夹
-        DOWNLOADED_FILENAMES+=($FILENAME)
-        
-        # 记录开始时间
-        TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-        
-        echo "正在下载: $FILENAME"
-        # 调用 N_m3u8DL-RE 下载（使用正确的参数格式）
-        N_m3u8DL-RE "$M3U8_URL" --save-dir "$OUTPUT_DIR" --save-name "$FILENAME" --tmp-dir "$LOG_DIR" --log-level error
-        
-        # 检查下载结果
-        if [ $? -eq 0 ]; then
-            STATUS="成功"
-            echo "✓ 下载成功: $FILENAME"
-        else
-            STATUS="失败"
-            echo "✗ 下载失败: $FILENAME"
-        fi
-        
-        # 记录到日志文件
-        echo "$TIMESTAMP:$STATUS:$FILENAME:$M3U8_URL" >> "$DOWNLOAD_LOG"
-        
-        # 1. 清理 /usr/local/bin/Logs 中的日志（实时清理，不影响转换）
-        rm -f /usr/local/bin/Logs/*.log /usr/local/bin/Logs/*.tmp /usr/local/bin/Logs/*.temp 2>/dev/null
-        
-    done < "$TXT_FILE"
-    
-    # 清理临时文件（包括远程下载的TXT文件）
-    rm -f "$TXT_FILE"
-    
-    # 2. 统一清理临时目录下生成的临时文件夹（所有下载完成后）
-    echo "正在清理 $LOG_DIR/ 中的临时文件夹..."
-    for fname in "${DOWNLOADED_FILENAMES[@]}"; do
-        # 检查OUTPUT_DIR中是否存在对应的视频文件
-        # 支持多种视频文件扩展名
-        VIDEO_FILE_FOUND=false
-        for ext in mp4 mkv avi flv mov webm; do
-            if [ -f "$OUTPUT_DIR/$fname.$ext" ]; then
-                VIDEO_FILE_FOUND=true
-                break
-            fi
-        done
-        
-        # 只有当对应的视频文件存在时，才清理临时目录下的临时文件夹
-        if [ "$VIDEO_FILE_FOUND" = true ] && [ -d "$LOG_DIR/$fname" ]; then
-            echo "正在删除临时文件夹：$LOG_DIR/$fname（视频文件已存在）"
-            rm -rf "$LOG_DIR/$fname" 2>/dev/null
-        elif [ -d "$LOG_DIR/$fname" ]; then
-            echo "跳过清理：$LOG_DIR/$fname（未找到视频文件）"
-        fi
-    done
-    
+    echo "✓ 下载进程已启动！"
+    echo "进程将在后台运行，不会影响当前终端使用。"
+    echo ""
     echo "========================================"
-    echo "下载完成！"
-    echo "日志文件：$DOWNLOAD_LOG"
+    echo "启动完成！"
     echo "输出目录：$OUTPUT_DIR"
+    read -p "按任意键返回菜单..." -n1 -s
+}
+
+# 功能2: 查看下载进程
+view_download_process() {
+    echo "========================================"
+    echo "          查看下载进程"
+    echo "========================================"
+    echo "正在查看下载进程日志..."
+    echo "命令: tail -n 20 nohup.out"
+    echo ""
+    
+    # 查看下载进程
+    if [ -f "nohup.out" ]; then
+        tail -n 20 nohup.out
+    else
+        echo "未找到 nohup.out 文件，可能还没有运行下载进程。"
+    fi
+    
+    echo ""
+    echo "========================================"
     read -p "按任意键返回菜单..." -n1 -s
 }
 
@@ -216,7 +146,7 @@ config_setup() {
     # 显示当前配置
     echo "当前配置："
     echo "下载完成后储存的目录：$OUTPUT_DIR"
-    echo "使用过程中产生的临时文件和日记目录：$TXT_DIR"
+    echo "临时文件目录：$TXT_DIR"
     echo "需要进行下载的TXT文件：$TXT_URL"
     echo ""
     
@@ -256,7 +186,7 @@ config_setup() {
     echo ""
     echo "新配置："
     echo "下载完成后储存的目录：$OUTPUT_DIR"
-    echo "使用过程中产生的临时文件和日记目录：$TXT_DIR"
+    echo "临时文件目录：$TXT_DIR"
     echo "需要进行下载的TXT文件：$TXT_URL"
     echo ""
     
@@ -307,9 +237,6 @@ stop_download() {
     # 4. 清理残留的临时文件
     echo ""
     echo "4. 正在清理临时文件..."
-    echo "- 清理 $LOG_DIR..."
-    rm -f "$LOG_DIR"/*.tmp "$LOG_DIR"/*.temp "$LOG_DIR"/*.log 2>/dev/null
-    
     echo "- 清理 /usr/local/bin/Logs..."
     rm -f /usr/local/bin/Logs/*.tmp /usr/local/bin/Logs/*.temp /usr/local/bin/Logs/*.log 2>/dev/null
     
@@ -338,7 +265,6 @@ stop_download() {
     echo "5. 最终状态:"
     echo "- 停止操作已完成！"
     echo "- 请检查 $OUTPUT_DIR 查看已完成的文件"
-    echo "- 请检查 $DOWNLOAD_LOG 查看下载历史"
     echo ""
     
     read -p "按任意键返回菜单..." -n1 -s
@@ -527,21 +453,24 @@ main() {
                 m3u8_download
                 ;;
             2)
-                config_setup
+                view_download_process
                 ;;
             3)
-                env_install
+                config_setup
                 ;;
             4)
-                stop_download
+                env_install
                 ;;
             5)
-                update_script
+                stop_download
                 ;;
             6)
-                uninstall_script
+                update_script
                 ;;
             7)
+                uninstall_script
+                ;;
+            8)
                 echo "========================================"
                 echo "      感谢使用，再见！"
                 echo "下次如需使用，输入代码：   ./dl.m3u8.sh"
@@ -550,7 +479,7 @@ main() {
                 exit 0
                 ;;
             *)
-                echo "错误：无效的选择！请输入1-7之间的数字。"
+                echo "错误：无效的选择！请输入1-8之间的数字。"
                 sleep 1
                 ;;
         esac
