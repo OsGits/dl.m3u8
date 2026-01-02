@@ -14,10 +14,24 @@ DOWNLOAD_LOG="$LOG_DIR/download.log"
 # 显示菜单函数
 show_menu() {
     clear
+    
+    # 获取最新版本号
+    local update_url="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh"
+    local latest_version="获取中..."
+    
+    # 尝试从GitHub获取最新版本号
+    if command -v curl &> /dev/null; then
+        latest_version=$(curl -s "$update_url" | grep -oP '当前版本：\Kv[0-9]+\.[0-9]+\.[0-9]+' 2>/dev/null || echo "获取失败")
+    elif command -v wget &> /dev/null; then
+        latest_version=$(wget -q -O - "$update_url" | grep -oP '当前版本：\Kv[0-9]+\.[0-9]+\.[0-9]+' 2>/dev/null || echo "获取失败")
+    else
+        latest_version="无法获取"
+    fi
+    
     echo "========================================"
-    echo "          M3U8下载工具菜单"
-    echo "          来源：https://github.com/OsGits/dl.m3u8"
-    echo "          版本：v0.0.2"
+    echo "    M3U8下载工具菜单"
+    echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
+    echo "    当前版本：v0.0.2   最新版本：$latest_version"
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 使用配置(首次使用第1步)"
