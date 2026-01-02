@@ -19,10 +19,11 @@ show_menu() {
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 环境一键安装"
-    echo "3: 停止下载进程"
-    echo "4: 退出"
+    echo "3: 使用配置(必须)"
+    echo "4: 停止下载进程"
+    echo "5: 退出"
     echo "========================================"
-    echo -n "请选择操作 (1-4): "
+    echo -n "请选择操作 (1-5): "
 }
 
 # 功能1: M3u8资源下载
@@ -138,7 +139,7 @@ env_install() {
     
     # 下载并安装 N_m3u8DL-RE
     echo "正在下载并安装 N_m3u8DL-RE..."
-    wget https://github.com/nilaoda/N_m3u8DL-RE/releases/download/v0.5.1-beta/N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
+    wget https://github.com/OsGits/dl.m3u8/releases/download/V0.0.1/N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
     tar -xzvf N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
     sudo mv N_m3u8DL-RE /usr/local/bin/
     sudo chmod +x /usr/local/bin/N_m3u8DL-RE
@@ -160,7 +161,63 @@ env_install() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能3: 停止下载进程
+# 功能3: 使用配置(必须)
+config_setup() {
+    echo "========================================"
+    echo "          使用配置(必须)"
+    echo "========================================"
+    
+    # 显示当前配置
+    echo "当前配置："
+    echo "下载完成后储存的目录：$OUTPUT_DIR"
+    echo "使用过程中产生的临时文件和日记目录：$TXT_DIR"
+    echo "需要进行下载的TXT文件：$TXT_URL"
+    echo ""
+    
+    # 获取用户输入，支持直接回车使用默认值
+    read -p "请输入下载完成后储存的目录 [$OUTPUT_DIR]: " new_output_dir
+    if [ -n "$new_output_dir" ]; then
+        OUTPUT_DIR="$new_output_dir"
+    fi
+    
+    read -p "请输入使用过程中产生的临时文件和日记目录 [$TXT_DIR]: " new_txt_dir
+    if [ -n "$new_txt_dir" ]; then
+        TXT_DIR="$new_txt_dir"
+    fi
+    
+    read -p "请输入需要进行下载的TXT文件，如http://cnp.cc/urls.txt [$TXT_URL]: " new_txt_url
+    if [ -n "$new_txt_url" ]; then
+        TXT_URL="$new_txt_url"
+    fi
+    
+    # 更新脚本文件中的配置
+    echo "正在保存配置..."
+    
+    # 使用sed命令更新配置（兼容不同系统）
+    if command -v sed &> /dev/null; then
+        # 更新OUTPUT_DIR
+        sed -i "s|^OUTPUT_DIR=.*|OUTPUT_DIR=\"$OUTPUT_DIR\"|" "$0"
+        # 更新TXT_DIR
+        sed -i "s|^TXT_DIR=.*|TXT_DIR=\"$TXT_DIR\"|" "$0"
+        # 更新TXT_URL
+        sed -i "s|^TXT_URL=.*|TXT_URL=\"$TXT_URL\"|" "$0"
+        
+        echo "配置保存成功！"
+    else
+        echo "警告：无法保存配置（sed命令不可用）。配置仅在当前会话有效。"
+    fi
+    
+    echo ""
+    echo "新配置："
+    echo "下载完成后储存的目录：$OUTPUT_DIR"
+    echo "使用过程中产生的临时文件和日记目录：$TXT_DIR"
+    echo "需要进行下载的TXT文件：$TXT_URL"
+    echo ""
+    
+    read -p "按任意键返回菜单..." -n1 -s
+}
+
+# 功能4: 停止下载进程
 stop_download() {
     echo "========================================"
     echo "          停止下载进程"
@@ -254,16 +311,19 @@ main() {
                 env_install
                 ;;
             3)
-                stop_download
+                config_setup
                 ;;
             4)
+                stop_download
+                ;;
+            5)
                 echo "========================================"
                 echo "          感谢使用，再见！"
                 echo "========================================"
                 exit 0
                 ;;
             *)
-                echo "错误：无效的选择！请输入1-4之间的数字。"
+                echo "错误：无效的选择！请输入1-5之间的数字。"
                 sleep 1
                 ;;
         esac
