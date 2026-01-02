@@ -18,11 +18,11 @@
 ### 初始准备
 1. 下载脚本到服务器：
    ```bash
-   wget https://github.com/OsGits/dl.m3u8/releases/download/V0.0.1/dl.m3u8.sh
+   wget https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh
    ```
    或
    ```bash
-   curl -O https://github.com/OsGits/dl.m3u8/releases/download/V0.0.1/dl.m3u8.sh
+   curl -O https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh
    ```
 
 2. 确保脚本具有执行权限：
@@ -237,45 +237,8 @@ sudo ./dl.m3u8.sh
 | `an.dl.m3u8.sh` | 原环境安装脚本（已集成） |
 | `tdl.sh` | 原进程停止脚本（已集成） |
 
-## 脚本结构
 
-### 配置部分（脚本开头）
-```
-dl.m3u8.sh
-├── OUTPUT_DIR          # 输出目录配置
-├── TXT_DIR             # TXT文件目录配置
-├── TXT_URL             # TXT文件链接配置
-├── LOG_DIR             # 日志目录配置（自动生成）
-└── DOWNLOAD_LOG        # 下载日志路径（自动生成）
-```
 
-### 功能函数部分
-```
-dl.m3u8.sh
-├── show_menu()          # 显示菜单函数
-├── m3u8_download()      # M3U8资源下载函数
-├── env_install()        # 环境一键安装函数
-├── stop_download()      # 停止下载进程函数
-└── main()               # 主程序入口
-```
-
-## 更新日志
-
-### v1.1 (2026-01-02)
-- 优化了配置管理，将所有配置变量集中到脚本开头
-- 新增了TXT_DIR变量，用于统一管理TXT文件目录
-- 将TXT_URL从函数内部移至配置部分，方便统一修改
-- 更新了日志目录的依赖关系，基于TXT_DIR自动生成
-
-### v1.0 (2026-01-02)
-- 首次发布
-- 集成三大核心功能
-- 实现菜单交互界面
-- 优化用户体验
-
-## 联系方式
-
-如有问题或建议，欢迎反馈。
 
 ---
 
