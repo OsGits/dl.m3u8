@@ -31,7 +31,7 @@ show_menu() {
     echo "========================================"
     echo "  M3U8下载工具菜单"
     echo "  脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "  当前版本：v2601.0301.22   最新版本：$latest_version"
+    echo "  当前版本：v2601.0301.30   最新版本：$latest_version"
     echo "  下次打开直接输入   ./dl.sh"
     echo "========================================"
     echo "1: M3u8资源下载"
@@ -120,12 +120,31 @@ clear_cache() {
         echo "   ℹ download.log文件不存在，跳过"
     fi
     
-    # 4. 删除临时文件目录下的临时文件
-    TMP_DIR="${TXT_DIR}/Log"
-    echo "4. 检查临时文件目录 $TMP_DIR..."
-    if [ -d "$TMP_DIR" ]; then
-        # 删除所有临时文件（.tmp, .temp, .log等）
-        TMP_FILES=$(find "$TMP_DIR" -type f -name "*.tmp" -o -name "*.temp" -o -name "*.log" -o -name "*.txt" 2>/dev/null)
+    # 4. 删除/usr/local/bin/Logs目录下的日志和临时文件
+    echo "4. 检查/usr/local/bin/Logs目录..."
+    if [ -d /usr/local/bin/Logs ]; then
+        # 删除所有日志和临时文件
+        LOG_FILES=$(find /usr/local/bin/Logs -type f -name "*.log" -o -name "*.tmp" -o -name "*.temp" 2>/dev/null)
+        if [ -n "$LOG_FILES" ]; then
+            for FILE in $LOG_FILES; do
+                FILE_SIZE=$(du -b "$FILE" | cut -f1)
+                TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FILE_SIZE))
+                echo "   ✓ 删除日志文件: $(basename "$FILE") ($(echo "scale=2; $FILE_SIZE/1024" | bc) KB)"
+                rm -f "$FILE"
+            done
+        else
+            echo "   ℹ /usr/local/bin/Logs目录中没有临时文件，跳过"
+        fi
+    else
+        echo "   ℹ /usr/local/bin/Logs目录不存在，跳过"
+    fi
+    
+    # 5. 删除日志目录下的所有临时文件和以视频名命名的临时文件夹
+    LOG_DIR="${TXT_DIR}/Log"
+    echo "5. 检查日志目录 $LOG_DIR..."
+    if [ -d "$LOG_DIR" ]; then
+        # 删除所有临时文件（包括远程下载的TXT文件、日志文件等）
+        TMP_FILES=$(find "$LOG_DIR" -type f 2>/dev/null)
         if [ -n "$TMP_FILES" ]; then
             for FILE in $TMP_FILES; do
                 FILE_SIZE=$(du -b "$FILE" | cut -f1)
@@ -134,41 +153,36 @@ clear_cache() {
                 rm -f "$FILE"
             done
         else
-            echo "   ℹ 临时文件目录中没有临时文件，跳过"
+            echo "   ℹ 日志目录中没有临时文件，跳过"
         fi
         
-        # 删除空的临时文件夹
-        EMPTY_DIRS=$(find "$TMP_DIR" -type d -empty 2>/dev/null)
-        if [ -n "$EMPTY_DIRS" ]; then
-            for DIR in $EMPTY_DIRS; do
-                echo "   ✓ 删除空目录: $(basename "$DIR")"
-                rm -rf "$DIR"
+        # 删除所有以视频名命名的临时文件夹，无论视频文件是否存在
+        VIDEO_TMP_FOLDERS=$(find "$LOG_DIR" -type d ! -path "$LOG_DIR" 2>/dev/null)
+        if [ -n "$VIDEO_TMP_FOLDERS" ]; then
+            for FOLDER in $VIDEO_TMP_FOLDERS; do
+                FOLDER_SIZE=$(du -sb "$FOLDER" | cut -f1)
+                TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FOLDER_SIZE))
+                echo "   ✓ 删除视频临时文件夹: $(basename "$FOLDER") ($(echo "scale=2; $FOLDER_SIZE/1024/1024" | bc) MB)"
+                rm -rf "$FOLDER" 2>/dev/null
             done
+        else
+            echo "   ℹ 日志目录中没有以视频名命名的临时文件夹，跳过"
         fi
     else
-        echo "   ℹ 临时文件目录不存在，跳过"
+        echo "   ℹ 日志目录不存在，跳过"
     fi
     
-    # 5. 删除/root目录下的临时文件夹（如果有）
-    echo "5. 检查/root目录下的临时文件夹..."
+    # 6. 删除/root目录下的临时文件夹（如果有）
+    echo "6. 检查/root目录下的临时文件夹..."
     for FOLDER in $(ls -d /root/* 2>/dev/null); do
         if [ -d "$FOLDER" ]; then
             # 检查是否为视频文件夹（假设名称不包含特殊字符）
             FOLDER_NAME=$(basename "$FOLDER")
-            # 检查是否有对应的视频文件存在，有的话才清理
-            VIDEO_FOUND=false
-            for EXT in mp4 mkv avi flv mov webm; do
-                if [ -f "$OUTPUT_DIR/$FOLDER_NAME.$EXT" ]; then
-                    VIDEO_FOUND=true
-                    break
-                fi
-            done
-            if [ "$VIDEO_FOUND" = true ]; then
-                FOLDER_SIZE=$(du -sb "$FOLDER" | cut -f1)
-                TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FOLDER_SIZE))
-                echo "   ✓ 删除临时文件夹: $FOLDER_NAME ($(echo "scale=2; $FOLDER_SIZE/1024/1024" | bc) MB)"
-                rm -rf "$FOLDER" 2>/dev/null
-            fi
+            # 删除所有临时文件夹，无论视频文件是否存在
+            FOLDER_SIZE=$(du -sb "$FOLDER" | cut -f1)
+            TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FOLDER_SIZE))
+            echo "   ✓ 删除临时文件夹: $FOLDER_NAME ($(echo "scale=2; $FOLDER_SIZE/1024/1024" | bc) MB)"
+            rm -rf "$FOLDER" 2>/dev/null
         fi
     done
     
