@@ -16,15 +16,18 @@ show_menu() {
     clear
     echo "========================================"
     echo "          M3U8下载工具菜单"
+    echo "          来源：https://github.com/OsGits/dl.m3u8"
+    echo "          版本：v0.0.2"
     echo "========================================"
     echo "1: M3u8资源下载"
-    echo "2: 环境一键安装"
-    echo "3: 使用配置(必须)"
+    echo "2: 使用配置(首次使用第1步)"
+    echo "3: 环境一键配置(首次使用第2步)"
     echo "4: 停止下载进程"
     echo "5: 更新脚本"
-    echo "6: 退出"
+    echo "6: 删除脚本(谨慎操作)"
+    echo "7: 退出"
     echo "========================================"
-    echo -n "请选择操作 (1-6): "
+    echo -n "请选择操作 (1-7): "
 }
 
 # 功能1: M3u8资源下载
@@ -379,6 +382,95 @@ update_script() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
+# 功能6: 删除脚本(谨慎操作)
+uninstall_script() {
+    echo "========================================"
+    echo "          删除脚本(谨慎操作)"
+    echo "========================================"
+    
+    echo "警告：此操作将永久删除以下内容！"
+    echo "1. N_m3u8DL-RE 程序"
+    echo "2. ffmpeg 及相关环境"
+    echo "3. 当前脚本文件"
+    echo ""
+    echo "此操作不可恢复，请谨慎执行！"
+    echo ""
+    
+    # 要求用户确认
+    read -p "请输入 'YES' 确认删除，输入其他内容取消：" confirm
+    if [ "$confirm" != "YES" ]; then
+        echo ""
+        echo "删除操作已取消！"
+        read -p "按任意键返回菜单..." -n1 -s
+        return
+    fi
+    
+    echo ""
+    echo "正在执行删除操作..."
+    echo "========================================"
+    
+    # 1. 删除N_m3u8DL-RE程序
+    echo "1. 删除N_m3u8DL-RE程序..."
+    if [ -f "/usr/local/bin/N_m3u8DL-RE" ]; then
+        if rm -f "/usr/local/bin/N_m3u8DL-RE"; then
+            echo "✓ N_m3u8DL-RE 删除成功！"
+        else
+            echo "✗ N_m3u8DL-RE 删除失败！"
+        fi
+    else
+        echo "ℹ N_m3u8DL-RE 不存在，跳过删除！"
+    fi
+    
+    # 2. 卸载ffmpeg及相关依赖
+    echo ""
+    echo "2. 卸载ffmpeg及相关依赖..."
+    if command -v apt &> /dev/null; then
+        # Ubuntu/Debian系统
+        sudo apt remove -y ffmpeg libgdiplus
+        sudo apt autoremove -y
+        echo "✓ ffmpeg 及相关依赖卸载完成！"
+    elif command -v yum &> /dev/null; then
+        # CentOS/RHEL系统
+        sudo yum remove -y ffmpeg
+        echo "✓ ffmpeg 卸载完成！"
+    else
+        echo "ℹ 不支持的包管理器，跳过ffmpeg卸载！"
+    fi
+    
+    # 3. 删除脚本本身
+    echo ""
+    echo "3. 删除当前脚本文件..."
+    local script_path="$0"
+    local script_name="$(basename "$script_path")"
+    
+    # 创建一个临时删除脚本
+    cat > /tmp/uninstall_final.sh << 'EOF'
+#!/bin/bash
+# 延迟执行删除操作
+sleep 1
+rm -f "$1"
+echo "✓ 脚本文件已删除！"
+echo ""
+echo "========================================"
+echo "删除操作已完成！"
+echo "========================================"
+sleep 2
+EOF
+    
+    chmod +x /tmp/uninstall_final.sh
+    
+    # 在后台执行临时删除脚本
+    /tmp/uninstall_final.sh "$script_path" &
+    
+    echo "========================================"
+    echo "删除操作正在执行..."
+    echo "脚本将在几秒后自动关闭！"
+    echo "========================================"
+    
+    # 退出脚本
+    exit 0
+}
+
 # 主程序
 main() {
     while true; do
@@ -389,10 +481,10 @@ main() {
                 m3u8_download
                 ;;
             2)
-                env_install
+                config_setup
                 ;;
             3)
-                config_setup
+                env_install
                 ;;
             4)
                 stop_download
@@ -401,13 +493,16 @@ main() {
                 update_script
                 ;;
             6)
+                uninstall_script
+                ;;
+            7)
                 echo "========================================"
                 echo "          感谢使用，再见！"
                 echo "========================================"
                 exit 0
                 ;;
             *)
-                echo "错误：无效的选择！请输入1-6之间的数字。"
+                echo "错误：无效的选择！请输入1-7之间的数字。"
                 sleep 1
                 ;;
         esac
