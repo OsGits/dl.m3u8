@@ -21,9 +21,10 @@ show_menu() {
     echo "2: 环境一键安装"
     echo "3: 使用配置(必须)"
     echo "4: 停止下载进程"
-    echo "5: 退出"
+    echo "5: 更新脚本"
+    echo "6: 退出"
     echo "========================================"
-    echo -n "请选择操作 (1-5): "
+    echo -n "请选择操作 (1-6): "
 }
 
 # 功能1: M3u8资源下载
@@ -298,6 +299,86 @@ stop_download() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
+# 功能5: 更新脚本
+update_script() {
+    echo "========================================"
+    echo "          更新脚本"
+    echo "========================================"
+    
+    local script_path="$0"
+    local backup_path="${script_path}.bak"
+    local update_url="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh"
+    local temp_file="/tmp/dl.m3u8.sh.new"
+    
+    echo "正在从以下地址下载最新脚本："
+    echo "$update_url"
+    echo ""
+    
+    # 创建临时目录（如果不存在）
+    mkdir -p "/tmp"
+    
+    # 下载最新脚本
+    if command -v curl &> /dev/null; then
+        if curl -s -o "$temp_file" "$update_url"; then
+            echo "✓ 脚本下载成功！"
+        else
+            echo "✗ 脚本下载失败！"
+            read -p "按任意键返回菜单..." -n1 -s
+            return
+        fi
+    elif command -v wget &> /dev/null; then
+        if wget -q -O "$temp_file" "$update_url"; then
+            echo "✓ 脚本下载成功！"
+        else
+            echo "✗ 脚本下载失败！"
+            read -p "按任意键返回菜单..." -n1 -s
+            return
+        fi
+    else
+        echo "✗ 未安装 curl 或 wget，无法下载脚本！"
+        read -p "按任意键返回菜单..." -n1 -s
+        return
+    fi
+    
+    # 检查下载的脚本是否有效
+    if [ ! -s "$temp_file" ]; then
+        echo "✗ 下载的脚本为空，更新失败！"
+        read -p "按任意键返回菜单..." -n1 -s
+        rm -f "$temp_file"
+        return
+    fi
+    
+    # 备份当前脚本
+    cp "$script_path" "$backup_path"
+    echo "✓ 当前脚本已备份到：$backup_path"
+    
+    # 替换当前脚本
+    if mv "$temp_file" "$script_path"; then
+        echo "✓ 脚本替换成功！"
+    else
+        echo "✗ 脚本替换失败！正在恢复备份..."
+        mv "$backup_path" "$script_path"
+        read -p "按任意键返回菜单..." -n1 -s
+        return
+    fi
+    
+    # 添加可执行权限
+    if chmod +x "$script_path"; then
+        echo "✓ 已添加可执行权限！"
+    else
+        echo "✗ 添加可执行权限失败！"
+        read -p "按任意键返回菜单..." -n1 -s
+        return
+    fi
+    
+    echo ""
+    echo "========================================"
+    echo "脚本更新完成！"
+    echo "建议重新运行脚本以使用最新版本。"
+    echo "========================================"
+    read -p "按任意键返回菜单..." -n1 -s
+}
+
 # 主程序
 main() {
     while true; do
@@ -317,13 +398,16 @@ main() {
                 stop_download
                 ;;
             5)
+                update_script
+                ;;
+            6)
                 echo "========================================"
                 echo "          感谢使用，再见！"
                 echo "========================================"
                 exit 0
                 ;;
             *)
-                echo "错误：无效的选择！请输入1-5之间的数字。"
+                echo "错误：无效的选择！请输入1-6之间的数字。"
                 sleep 1
                 ;;
         esac
