@@ -87,15 +87,21 @@ m3u8_download() {
         
         echo "正在下载: $FILENAME"
         # 调用 N_m3u8DL-RE 下载（使用正确的参数格式）
-        N_m3u8DL-RE "$M3U8_URL" --save-dir "$OUTPUT_DIR" --save-name "$FILENAME" --tmp-dir "$LOG_DIR" --log-level error
+        output=$(N_m3u8DL-RE "$M3U8_URL" --save-dir "$OUTPUT_DIR" --save-name "$FILENAME" --tmp-dir "$LOG_DIR" --log-level error 2>&1)
+        result=$?
         
         # 检查下载结果
-        if [ $? -eq 0 ]; then
+        if [ $result -eq 0 ]; then
             STATUS="成功"
             echo "✓ 下载成功: $FILENAME"
         else
             STATUS="失败"
-            echo "✗ 下载失败: $FILENAME"
+            # 检查是否是特定的URL加载错误
+            if echo "$output" | grep -q "Failed to load URL"; then
+                echo "✗ 下载失败: 你的TXT链接有问题，需要你重新搞搞！"
+            else
+                echo "✗ 下载失败: $FILENAME"
+            fi
         fi
         
         # 记录到日志文件
