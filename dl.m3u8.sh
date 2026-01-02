@@ -329,7 +329,6 @@ update_script() {
     echo "========================================"
     
     local script_path="$0"
-    local backup_path="${script_path}.bak"
     local update_url="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh"
     local temp_file="/tmp/dl.m3u8.sh.new"
     
@@ -371,16 +370,11 @@ update_script() {
         return
     fi
     
-    # 备份当前脚本
-    cp "$script_path" "$backup_path"
-    echo "✓ 当前脚本已备份到：$backup_path"
-    
     # 替换当前脚本
     if mv "$temp_file" "$script_path"; then
         echo "✓ 脚本替换成功！"
     else
-        echo "✗ 脚本替换失败！正在恢复备份..."
-        mv "$backup_path" "$script_path"
+        echo "✗ 脚本替换失败！"
         read -p "按任意键返回菜单..." -n1 -s
         return
     fi
@@ -424,7 +418,7 @@ uninstall_script() {
     echo ""
     
     # 要求用户确认
-    read -p "请输入 'YES' 确认删除，输入其他内容取消：" confirm
+    read -p "请输入 'YES' (大写字母)确认删除，输入其他内容取消：" confirm
     if [ "$confirm" != "YES" ]; then
         echo ""
         echo "删除操作已取消！"
