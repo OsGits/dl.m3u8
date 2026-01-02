@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# 设置输出目录
-OUTPUT_DIR="/www/OssOpen/DLoss"
-# 设置日志目录
-TXT_DIR="/www/OssOpen/TXTOss"
-# 设置储存m3u8链接的TXT文件链接
-TXT_URL="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/cs.txt"
+# 检查DLfile.sh是否存在，如果存在则读取配置
+if [ -f "DLfile.sh" ]; then
+    source DLfile.sh
+else
+    # 默认配置
+    OUTPUT_DIR="/www/OssOpen/DLoss"
+    TXT_DIR="/www/OssOpen/TXTOss"
+    TXT_URL="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/cs.txt"
+fi
 
 # 以下类容建议不要修改！
 # 显示菜单函数
@@ -28,7 +31,7 @@ show_menu() {
     echo "========================================"
     echo "    M3U8下载工具菜单"
     echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v2601.0300.44   最新版本：$latest_version"
+    echo "    当前版本：v2601.0301.02   最新版本：$latest_version"
     echo "下次打开直接输入   ./dl.sh"
     echo "========================================"
     echo "1: M3u8资源下载"
@@ -48,8 +51,7 @@ m3u8_download() {
     echo "          M3u8资源下载"
     echo "========================================"
     
-    # 创建目录
-    mkdir -p "$OUTPUT_DIR"
+
     
     echo "正在启动下载进程..."
     echo "命令: nohup ./N_m3u8DL-RE.sh &"
@@ -124,10 +126,7 @@ env_install() {
     echo "正在清理安装文件..."
     rm packages-microsoft-prod.deb N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
     
-    # 创建目录
-    echo "正在创建必要的目录..."
-    mkdir -p "$OUTPUT_DIR"
-    mkdir -p "$TXT_DIR"
+
     
     # 下载GitHub资源
     echo ""
@@ -185,38 +184,53 @@ config_setup() {
         TXT_URL="$new_txt_url"
     fi
     
-    # 更新脚本文件中的配置
-    echo "正在保存配置..."
+    # 更新DLfile.sh配置
+    echo "正在保存配置到DLfile.sh..."
     
-    # 使用sed命令更新配置（兼容不同系统）
-    if command -v sed &> /dev/null; then
-        # 更新主脚本配置
-        echo "正在更新dl.sh配置..."
+    # 创建DLfile.sh文件
+    cat > DLfile.sh << EOF
+#!/bin/bash
+
+# 统一配置文件
+# 用于管理所有下载相关的配置参数
+
+# 设置输出目录
+OUTPUT_DIR="$OUTPUT_DIR"
+# 设置日志目录
+TXT_DIR="$TXT_DIR"
+# 设置储存m3u8链接的TXT文件链接
+TXT_URL="$TXT_URL"
+EOF
+    
+    # 添加执行权限
+    chmod +x DLfile.sh
+    echo "✓ DLfile.sh配置文件已创建！"
+    
+    # 复制到/root目录并设置权限
+    echo "正在创建/root/DLfile.sh并设置权限..."
+    cp DLfile.sh /root/DLfile.sh
+    chmod +x /root/DLfile.sh
+    echo "✓ /root/DLfile.sh已创建并添加了执行权限！"
+    
+    # 根据配置创建目录
+    echo "正在根据配置创建目录..."
+    mkdir -p "$OUTPUT_DIR"
+    mkdir -p "$TXT_DIR"
+    echo "✓ 目录已创建！"
+    
+    # 更新N_m3u8DL-RE.sh配置
+    echo "正在更新N_m3u8DL-RE.sh配置..."
+    local nm3u8dl_path="/root/N_m3u8DL-RE.sh"
+    if [ -f "$nm3u8dl_path" ]; then
         # 更新OUTPUT_DIR
-        sed -i "s|^OUTPUT_DIR=.*|OUTPUT_DIR=\"$OUTPUT_DIR\"|" "$0"
-        # 更新TXT_DIR
-        sed -i "s|^TXT_DIR=.*|TXT_DIR=\"$TXT_DIR\"|" "$0"
+        sed -i "s|^OUTPUT_DIR=.*|OUTPUT_DIR=\"$OUTPUT_DIR\"|" "$nm3u8dl_path"
+        # 更新LOG_DIR（由TXT_DIR派生）
+        sed -i "s|^LOG_DIR=.*|LOG_DIR=\"$TXT_DIR/Log\"|" "$nm3u8dl_path"
         # 更新TXT_URL
-        sed -i "s|^TXT_URL=.*|TXT_URL=\"$TXT_URL\"|" "$0"
-        
-        # 更新N_m3u8DL-RE.sh配置
-        echo "正在更新N_m3u8DL-RE.sh配置..."
-        local nm3u8dl_path="/root/N_m3u8DL-RE.sh"
-        if [ -f "$nm3u8dl_path" ]; then
-            # 更新OUTPUT_DIR
-            sed -i "s|^OUTPUT_DIR=.*|OUTPUT_DIR=\"$OUTPUT_DIR\"|" "$nm3u8dl_path"
-            # 更新LOG_DIR（由TXT_DIR派生）
-            sed -i "s|^LOG_DIR=.*|LOG_DIR=\"$TXT_DIR/Log\"|" "$nm3u8dl_path"
-            # 更新TXT_URL
-            sed -i "s|^TXT_URL=.*|TXT_URL=\"$TXT_URL\"|" "$nm3u8dl_path"
-            echo "N_m3u8DL-RE.sh配置更新成功！"
-        else
-            echo "警告：未找到N_m3u8DL-RE.sh文件，跳过N_m3u8DL-RE.sh配置更新！"
-        fi
-        
-        echo "配置保存成功！"
+        sed -i "s|^TXT_URL=.*|TXT_URL=\"$TXT_URL\"|" "$nm3u8dl_path"
+        echo "✓ N_m3u8DL-RE.sh配置更新成功！"
     else
-        echo "警告：无法保存配置（sed命令不可用）。配置仅在当前会话有效。"
+        echo "警告：未找到N_m3u8DL-RE.sh文件，跳过N_m3u8DL-RE.sh配置更新！"
     fi
     
     echo ""
@@ -318,6 +332,7 @@ uninstall_script() {
     echo "1. N_m3u8DL-RE 程序"
     echo "2. ffmpeg 及相关环境"
     echo "3. 当前脚本文件"
+    echo "4. DLfile.sh 配置文件（本地和/root目录）"
     echo ""
     echo "此操作不可恢复，请谨慎执行！"
     echo ""
@@ -374,8 +389,14 @@ uninstall_script() {
 #!/bin/bash
 # 延迟执行删除操作
 sleep 1
+# 删除当前脚本文件
 rm -f "$1"
 echo "✓ 脚本文件已删除！"
+# 删除DLfile.sh配置文件
+rm -f "$(dirname "$1")/DLfile.sh"
+echo "✓ 本地DLfile.sh已删除！"
+rm -f /root/DLfile.sh
+echo "✓ /root/DLfile.sh已删除！"
 echo ""
 echo "========================================"
 echo "删除操作已完成！"

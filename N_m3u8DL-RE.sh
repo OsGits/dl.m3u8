@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# 设置输出目录和日志目录
-OUTPUT_DIR="/www/OssOpen/DLoss"
-LOG_DIR="/www/OssOpen/TXTOss/Log"
-DOWNLOAD_LOG="$LOG_DIR/download.log"
+# 检查DLfile.sh是否存在，如果存在则读取配置
+if [ -f "/root/DLfile.sh" ]; then
+    source /root/DLfile.sh
+    LOG_DIR="$TXT_DIR/Log"
+    DOWNLOAD_LOG="$LOG_DIR/download.log"
+else
+    # 默认配置
+    OUTPUT_DIR="/www/OssOpen/DLoss"
+    TXT_DIR="/www/OssOpen/TXTOss"
+    LOG_DIR="$TXT_DIR/Log"
+    DOWNLOAD_LOG="$LOG_DIR/download.log"
+    TXT_URL="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/cs.txt"
+fi
 
 # 创建一个数组来存储所有下载的文件名，用于后续清理临时文件夹
 DOWNLOADED_FILENAMES=()
@@ -11,9 +20,6 @@ DOWNLOADED_FILENAMES=()
 # 创建目录
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$LOG_DIR"
-
-# 设置TXT文件链接（硬编码）
-TXT_URL="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/cs.txt"
 
 # 下载远程TXT文件到临时目录
 TMP_FILE="$LOG_DIR/$(basename "$TXT_URL")"
