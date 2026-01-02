@@ -18,9 +18,9 @@
 ### 初始准备
 1. 一键运行：
    ```bash
-   wget https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh
-   chmod +x dl.m3u8.sh
-   ./dl.m3u8.sh
+   wget https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh
+   chmod +x dl.sh
+   ./dl.sh
    ```
 - 首次安装：
 - 必须先运行菜单4 ，完成环境一键配置
@@ -28,11 +28,12 @@
 - 完成后，即可运行菜单1进行下载
 2. 后期如需要使用，运行   
    ```bash
-   ./dl.m3u8.sh
+   ./dl.sh
    ```
-  
+   即可直接使用，无需重新配置环境。
+   菜单中可修改下载目录、临时文件目录、TXT文件URL等配置。
 
-  
+
 
 ## 目录结构
 
