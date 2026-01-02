@@ -29,20 +29,21 @@ show_menu() {
     fi
     
     echo "========================================"
-    echo "    M3U8下载工具菜单"
-    echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v2601.0301.02   最新版本：$latest_version"
-    echo "下次打开直接输入   ./dl.sh"
+    echo "  M3U8下载工具菜单"
+    echo "  脚本来源：https://github.com/OsGits/dl.m3u8"
+    echo "  当前版本：v2601.0301.16   最新版本：$latest_version"
+    echo "  下次打开直接输入   ./dl.sh"
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 查看下载进程"
-    echo "3: 使用配置(首次使用第2步)"
-    echo "4: 安装/更新 (首次使用第1步)"
-    echo "5: 停止下载进程"
-    echo "6: 删除脚本(谨慎操作)"
-    echo "7: 退出"
+    echo "3: 清除缓存文件(不删视频只删临时文件)"
+    echo "4: 使用配置(首次使用第2步,更新不用)"
+    echo "5: 安装/更新 (首次使用第1步)"
+    echo "6: 停止下载进程"
+    echo "7: 删除脚本(谨慎操作)"
+    echo "8: 退出"
     echo "========================================"
-    echo -n "请选择操作 (1-7): "
+    echo -n "请选择操作 (1-8): "
 }
 
 # 功能1: M3u8资源下载
@@ -66,6 +67,118 @@ m3u8_download() {
     echo "========================================"
     echo "启动完成！"
     echo "输出目录：$OUTPUT_DIR"
+    read -p "按任意键返回菜单..." -n1 -s
+}
+
+# 功能3: 清除缓存文件(不删除视频，只清除临时文件)
+clear_cache() {
+    echo "========================================"
+    echo "      清除缓存文件(不删除视频)"
+    echo "========================================"
+    
+    # 显示当前配置
+    echo "当前配置："
+    echo "下载目录：$OUTPUT_DIR"
+    echo "临时文件目录：$TXT_DIR"
+    echo "日志目录：${TXT_DIR}/Log"
+    echo ""
+    
+    # 初始化删除大小计数器
+    TOTAL_DELETED_SIZE=0
+    
+    # 1. 删除/root目录下的nohup.out文件
+    echo "1. 检查/root/nohup.out文件..."
+    if [ -f /root/nohup.out ]; then
+        FILE_SIZE=$(du -b /root/nohup.out | cut -f1)
+        TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FILE_SIZE))
+        echo "   ✓ 删除/root/nohup.out文件 ($(echo "scale=2; $FILE_SIZE/1024/1024" | bc) MB)"
+        rm -f /root/nohup.out
+    else
+        echo "   ℹ /root/nohup.out文件不存在，跳过"
+    fi
+    
+    # 2. 删除当前目录下的nohup.out文件
+    echo "2. 检查当前目录nohup.out文件..."
+    if [ -f ./nohup.out ]; then
+        FILE_SIZE=$(du -b ./nohup.out | cut -f1)
+        TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FILE_SIZE))
+        echo "   ✓ 删除当前目录nohup.out文件 ($(echo "scale=2; $FILE_SIZE/1024/1024" | bc) MB)"
+        rm -f ./nohup.out
+    else
+        echo "   ℹ 当前目录nohup.out文件不存在，跳过"
+    fi
+    
+    # 3. 删除download.log文件
+    DOWNLOAD_LOG="${TXT_DIR}/Log/download.log"
+    echo "3. 检查download.log文件..."
+    if [ -f "$DOWNLOAD_LOG" ]; then
+        FILE_SIZE=$(du -b "$DOWNLOAD_LOG" | cut -f1)
+        TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FILE_SIZE))
+        echo "   ✓ 删除download.log文件 ($(echo "scale=2; $FILE_SIZE/1024/1024" | bc) MB)"
+        rm -f "$DOWNLOAD_LOG"
+    else
+        echo "   ℹ download.log文件不存在，跳过"
+    fi
+    
+    # 4. 删除临时文件目录下的临时文件
+    TMP_DIR="${TXT_DIR}/Log"
+    echo "4. 检查临时文件目录 $TMP_DIR..."
+    if [ -d "$TMP_DIR" ]; then
+        # 删除所有临时文件（.tmp, .temp, .log等）
+        TMP_FILES=$(find "$TMP_DIR" -type f -name "*.tmp" -o -name "*.temp" -o -name "*.log" -o -name "*.txt" 2>/dev/null)
+        if [ -n "$TMP_FILES" ]; then
+            for FILE in $TMP_FILES; do
+                FILE_SIZE=$(du -b "$FILE" | cut -f1)
+                TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FILE_SIZE))
+                echo "   ✓ 删除临时文件: $(basename "$FILE") ($(echo "scale=2; $FILE_SIZE/1024" | bc) KB)"
+                rm -f "$FILE"
+            done
+        else
+            echo "   ℹ 临时文件目录中没有临时文件，跳过"
+        fi
+        
+        # 删除空的临时文件夹
+        EMPTY_DIRS=$(find "$TMP_DIR" -type d -empty 2>/dev/null)
+        if [ -n "$EMPTY_DIRS" ]; then
+            for DIR in $EMPTY_DIRS; do
+                echo "   ✓ 删除空目录: $(basename "$DIR")"
+                rm -rf "$DIR"
+            done
+        fi
+    else
+        echo "   ℹ 临时文件目录不存在，跳过"
+    fi
+    
+    # 5. 删除/root目录下的临时文件夹（如果有）
+    echo "5. 检查/root目录下的临时文件夹..."
+    for FOLDER in $(ls -d /root/* 2>/dev/null); do
+        if [ -d "$FOLDER" ]; then
+            # 检查是否为视频文件夹（假设名称不包含特殊字符）
+            FOLDER_NAME=$(basename "$FOLDER")
+            # 检查是否有对应的视频文件存在，有的话才清理
+            VIDEO_FOUND=false
+            for EXT in mp4 mkv avi flv mov webm; do
+                if [ -f "$OUTPUT_DIR/$FOLDER_NAME.$EXT" ]; then
+                    VIDEO_FOUND=true
+                    break
+                fi
+            done
+            if [ "$VIDEO_FOUND" = true ]; then
+                FOLDER_SIZE=$(du -sb "$FOLDER" | cut -f1)
+                TOTAL_DELETED_SIZE=$((TOTAL_DELETED_SIZE + FOLDER_SIZE))
+                echo "   ✓ 删除临时文件夹: $FOLDER_NAME ($(echo "scale=2; $FOLDER_SIZE/1024/1024" | bc) MB)"
+                rm -rf "$FOLDER" 2>/dev/null
+            fi
+        fi
+    done
+    
+    # 显示总删除大小
+    echo ""
+    echo "========================================"
+    echo "清除缓存完成！"
+    echo "总删除大小：$(echo "scale=2; $TOTAL_DELETED_SIZE/1024/1024" | bc) MB"
+    echo "========================================"
+    
     read -p "按任意键返回菜单..." -n1 -s
 }
 
@@ -436,18 +549,21 @@ main() {
                 view_download_process
                 ;;
             3)
-                config_setup
+                clear_cache
                 ;;
             4)
-                env_install
+                config_setup
                 ;;
             5)
-                stop_download
+                env_install
                 ;;
             6)
-                uninstall_script
+                stop_download
                 ;;
             7)
+                uninstall_script
+                ;;
+            8)
                 echo "========================================"
                 echo "      感谢使用，再见！"
                 echo "下次如需使用，输入代码：   ./dl.sh"
@@ -456,7 +572,7 @@ main() {
                 exit 0
                 ;;
             *)
-                echo "错误：无效的选择！请输入1-7之间的数字。"
+                echo "错误：无效的选择！请输入1-8之间的数字。"
                 sleep 1
                 ;;
         esac
