@@ -31,7 +31,7 @@ show_menu() {
     echo "========================================"
     echo "    M3U8下载工具菜单"
     echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v0.0.6   最新版本：$latest_version"
+    echo "    当前版本：v0.0.7   最新版本：$latest_version"
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 使用配置(首次使用第1步)"
@@ -49,6 +49,9 @@ m3u8_download() {
     echo "========================================"
     echo "          M3u8资源下载"
     echo "========================================"
+    
+    # 创建一个数组来存储所有下载的文件名，用于后续清理临时文件夹
+    local DOWNLOADED_FILENAMES=()
     
     # 创建目录
     mkdir -p "$OUTPUT_DIR"
@@ -96,26 +99,23 @@ m3u8_download() {
             continue
         fi
         
+        # 将文件名添加到数组，用于后续统一清理临时文件夹
+        DOWNLOADED_FILENAMES+=($FILENAME)
+        
         # 记录开始时间
         TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
         
         echo "正在下载: $FILENAME"
         # 调用 N_m3u8DL-RE 下载（使用正确的参数格式）
-        output=$(N_m3u8DL-RE "$M3U8_URL" --save-dir "$OUTPUT_DIR" --save-name "$FILENAME" --tmp-dir "$LOG_DIR" --log-level error 2>&1)
-        result=$?
+        N_m3u8DL-RE "$M3U8_URL" --save-dir "$OUTPUT_DIR" --save-name "$FILENAME" --tmp-dir "$LOG_DIR" --log-level error
         
         # 检查下载结果
-        if [ $result -eq 0 ]; then
+        if [ $? -eq 0 ]; then
             STATUS="成功"
             echo "✓ 下载成功: $FILENAME"
         else
             STATUS="失败"
-            # 检查是否是特定的URL加载错误
-            if echo "$output" | grep -q "Failed to load URL"; then
-                echo "✗ 下载失败: 你的TXT链接有问题，需要你重新搞搞！"
-            else
-                echo "✗ 下载失败: $FILENAME"
-            fi
+            echo "✗ 下载失败: $FILENAME"
         fi
         
         # 记录到日志文件
@@ -128,6 +128,28 @@ m3u8_download() {
     
     # 清理临时文件（包括远程下载的TXT文件）
     rm -f "$TXT_FILE"
+    
+    # 2. 统一清理临时目录下生成的临时文件夹（所有下载完成后）
+    echo "正在清理 $LOG_DIR/ 中的临时文件夹..."
+    for fname in "${DOWNLOADED_FILENAMES[@]}"; do
+        # 检查OUTPUT_DIR中是否存在对应的视频文件
+        # 支持多种视频文件扩展名
+        VIDEO_FILE_FOUND=false
+        for ext in mp4 mkv avi flv mov webm; do
+            if [ -f "$OUTPUT_DIR/$fname.$ext" ]; then
+                VIDEO_FILE_FOUND=true
+                break
+            fi
+        done
+        
+        # 只有当对应的视频文件存在时，才清理临时目录下的临时文件夹
+        if [ "$VIDEO_FILE_FOUND" = true ] && [ -d "$LOG_DIR/$fname" ]; then
+            echo "正在删除临时文件夹：$LOG_DIR/$fname（视频文件已存在）"
+            rm -rf "$LOG_DIR/$fname" 2>/dev/null
+        elif [ -d "$LOG_DIR/$fname" ]; then
+            echo "跳过清理：$LOG_DIR/$fname（未找到视频文件）"
+        fi
+    done
     
     echo "========================================"
     echo "下载完成！"
