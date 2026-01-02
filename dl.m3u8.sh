@@ -143,7 +143,7 @@ env_install() {
     
     # 下载并安装 N_m3u8DL-RE
     echo "正在下载并安装 N_m3u8DL-RE..."
-    wget https://github.com/OsGits/dl.m3u8/releases/download/V0.0.1/N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
+    wget https://raw.githubusercontent.com/OsGits/dl.m3u8/main/N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
     tar -xzvf N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz
     sudo mv N_m3u8DL-RE /usr/local/bin/
     sudo chmod +x /usr/local/bin/N_m3u8DL-RE
@@ -377,9 +377,16 @@ update_script() {
     echo ""
     echo "========================================"
     echo "脚本更新完成！"
-    echo "建议重新运行脚本以使用最新版本。"
     echo "========================================"
-    read -p "按任意键返回菜单..." -n1 -s
+    echo "重要提示："
+    echo "1. 脚本已成功更新到最新版本"
+    echo "2. 脚本将在您按任意键后退出"
+    echo "3. 请重新运行脚本：./dl.m3u8.sh"
+    echo ""
+    echo "不重新运行可能导致功能异常！"
+    echo "========================================"
+    read -p "按任意键退出脚本..." -n1 -s
+    exit 0
 }
 
 # 功能6: 删除脚本(谨慎操作)
