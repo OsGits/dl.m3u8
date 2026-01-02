@@ -28,18 +28,18 @@ show_menu() {
     echo "========================================"
     echo "    M3U8下载工具菜单"
     echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v2601.0300.08   最新版本：$latest_version"
+    echo "    当前版本：v2601.0300.26   最新版本：$latest_version"
+    echo "下次打开直接输入   ./dl.m3u8.sh"
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 查看下载进程"
-    echo "3: 更新脚本"
-    echo "4: 使用配置(首次使用第2步)"
-    echo "5: 环境一键配置(首次使用第1步)"
-    echo "6: 停止下载进程"
-    echo "7: 删除脚本(谨慎操作)"
-    echo "8: 退出"
+    echo "3: 使用配置(首次使用第2步)"
+    echo "4: 安装/更新 (首次使用第1步)"
+    echo "5: 停止下载进程"
+    echo "6: 删除脚本(谨慎操作)"
+    echo "7: 退出"
     echo "========================================"
-    echo -n "请选择操作 (1-8): "
+    echo -n "请选择操作 (1-7): "
 }
 
 # 功能1: M3u8资源下载
@@ -88,10 +88,10 @@ view_download_process() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能5: 环境一键安装
+# 功能4: 安装/更新
 env_install() {
     echo "========================================"
-    echo "          环境一键安装"
+    echo "        安装/更新"
     echo "========================================"
     
     # 检查是否以root权限运行
@@ -150,11 +150,13 @@ env_install() {
     echo "========================================"
     echo "安装完成！版本信息："
     N_m3u8DL-RE --version
+    echo ""
+    echo "⚠️  提示：内容已更新，务必返回菜单，进行'使用配置'！"
     
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能4: 使用配置(必须)
+# 功能3: 使用配置(必须)
 config_setup() {
     echo "========================================"
     echo "          使用配置(必须)"
@@ -227,7 +229,7 @@ config_setup() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能6: 停止下载进程
+# 功能5: 停止下载进程
 stop_download() {
     echo "========================================"
     echo "          停止下载进程"
@@ -304,119 +306,9 @@ stop_download() {
     read -p "按任意键返回菜单..." -n1 -s
 }
 
-# 功能3: 更新脚本
-update_script() {
-    echo "========================================"
-    echo "          更新脚本"
-    echo "========================================"
-    
-    local script_path="$0"
-    local update_url="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.m3u8.sh"
-    local temp_file="/tmp/dl.m3u8.sh.new"
-    
-    echo "正在从以下地址下载最新脚本："
-    echo "$update_url"
-    echo ""
-    
-    # 创建临时目录（如果不存在）
-    mkdir -p "/tmp"
-    
-    # 下载最新脚本
-    if command -v curl &> /dev/null; then
-        if curl -s -o "$temp_file" "$update_url"; then
-            echo "✓ 脚本下载成功！"
-        else
-            echo "✗ 脚本下载失败！"
-            read -p "按任意键返回菜单..." -n1 -s
-            return
-        fi
-    elif command -v wget &> /dev/null; then
-        if wget -q -O "$temp_file" "$update_url"; then
-            echo "✓ 脚本下载成功！"
-        else
-            echo "✗ 脚本下载失败！"
-            read -p "按任意键返回菜单..." -n1 -s
-            return
-        fi
-    else
-        echo "✗ 未安装 curl 或 wget，无法下载脚本！"
-        read -p "按任意键返回菜单..." -n1 -s
-        return
-    fi
-    
-    # 检查下载的脚本是否有效
-    if [ ! -s "$temp_file" ]; then
-        echo "✗ 下载的脚本为空，更新失败！"
-        read -p "按任意键返回菜单..." -n1 -s
-        rm -f "$temp_file"
-        return
-    fi
-    
-    # 替换当前脚本
-    if mv "$temp_file" "$script_path"; then
-        echo "✓ 脚本替换成功！"
-    else
-        echo "✗ 脚本替换失败！"
-        read -p "按任意键返回菜单..." -n1 -s
-        return
-    fi
-    
-    # 添加可执行权限
-    if chmod +x "$script_path"; then
-        echo "✓ 已添加可执行权限！"
-    else
-        echo "✗ 添加可执行权限失败！"
-        read -p "按任意键返回菜单..." -n1 -s
-        return
-    fi
-    
-    # 更新dl.sh脚本
-    echo ""
-    echo "========================================"
-    echo "正在更新dl.sh脚本..."
-    echo "下载地址：https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh"
-    echo ""
-    
-    local dlsh_url="https://raw.githubusercontent.com/OsGits/dl.m3u8/main/dl.sh"
-    local dlsh_path="/root/dl.sh"
-    
-    if command -v curl &> /dev/null; then
-        if curl -s -o "$dlsh_path" "$dlsh_url"; then
-            echo "✓ dl.sh脚本下载成功！"
-        else
-            echo "✗ dl.sh脚本下载失败！"
-        fi
-    elif command -v wget &> /dev/null; then
-        if wget -q -O "$dlsh_path" "$dlsh_url"; then
-            echo "✓ dl.sh脚本下载成功！"
-        else
-            echo "✗ dl.sh脚本下载失败！"
-        fi
-    else
-        echo "✗ 未安装 curl 或 wget，无法下载dl.sh脚本！"
-    fi
-    
-    # 为dl.sh添加执行权限
-    if chmod +x "$dlsh_path"; then
-        echo "✓ dl.sh脚本已添加可执行权限！"
-    else
-        echo "✗ dl.sh脚本添加执行权限失败！"
-    fi
-    
-    echo ""
-    echo "========================================"
-    echo "脚本更新完成！"
-    echo "========================================"
-    read -p "按任意键退出脚本..." -n1 -s
-    echo "========================================"
-    echo "      感谢使用，再见！"
-    echo "下次如需使用，输入代码：   ./dl.m3u8.sh"
-    echo "更多好码：https://github.com/OsGits"
-    echo "========================================"
-    exit 0
-}
 
-# 功能7: 删除脚本(谨慎操作)
+
+# 功能6: 删除脚本(谨慎操作)
 uninstall_script() {
     echo "========================================"
     echo "          删除脚本(谨慎操作)"
@@ -523,21 +415,18 @@ main() {
                 view_download_process
                 ;;
             3)
-                update_script
-                ;;
-            4)
                 config_setup
                 ;;
-            5)
+            4)
                 env_install
                 ;;
-            6)
+            5)
                 stop_download
                 ;;
-            7)
+            6)
                 uninstall_script
                 ;;
-            8)
+            7)
                 echo "========================================"
                 echo "      感谢使用，再见！"
                 echo "下次如需使用，输入代码：   ./dl.m3u8.sh"
@@ -546,7 +435,7 @@ main() {
                 exit 0
                 ;;
             *)
-                echo "错误：无效的选择！请输入1-8之间的数字。"
+                echo "错误：无效的选择！请输入1-7之间的数字。"
                 sleep 1
                 ;;
         esac
