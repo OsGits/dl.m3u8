@@ -31,7 +31,7 @@ show_menu() {
     echo "========================================"
     echo "    M3U8下载工具菜单"
     echo "    脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "    当前版本：v0.0.2   最新版本：$latest_version"
+    echo "    当前版本：v0.0.3   最新版本：$latest_version"
     echo "========================================"
     echo "1: M3u8资源下载"
     echo "2: 使用配置(首次使用第1步)"
