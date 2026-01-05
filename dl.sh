@@ -30,8 +30,8 @@ show_menu() {
     
     echo "========================================"
     echo "  M3U8下载工具菜单"
-    echo "  脚本来源：https://github.com/OsGits/dl.m3u8"
-    echo "  当前版本：v2601.0301.58  最新版本：$latest_version"
+    echo "  脚本来源：https://Cnp.Cc"
+    echo "  当前版本：v2601.0508.3950  最新版本：$latest_version"
     echo "  下次打开直接输入  ./dl.sh"
     echo "========================================"
     echo "1: 启动M3u8资源下载"
