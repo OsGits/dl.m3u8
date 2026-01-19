@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# 确定脚本的实际位置，无论从哪个目录运行
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+
+# 切换到脚本所在目录
+cd "$SCRIPT_DIR"
+
 # 检查DLfile.sh是否存在，如果存在则读取配置
 if [ -f "DLfile.sh" ]; then
     source DLfile.sh
@@ -31,8 +38,8 @@ show_menu() {
     echo "========================================"
     echo "  M3U8下载工具菜单"
     echo "  脚本来源：https://Cnp.Cc"
-    echo "  当前版本：v2601.0508.3950  最新版本：$latest_version"
-    echo "  下次打开直接输入  ./dl.sh"
+    echo "  当前版本：v2601.1920.3001  最新版本：$latest_version"
+    echo "  下次打开直接输入  dL"
     echo "========================================"
     echo "1: 启动M3u8资源下载"
     echo "2: 查看下载进程"
@@ -288,6 +295,15 @@ env_install() {
         chmod +x "$temp_script"
         mv -f "$temp_script" "$script_path"
         echo "✓ dl.sh脚本已下载并覆盖当前脚本！"
+        
+        # 创建系统链接，使用户可以直接使用dl命令启动脚本
+        echo "正在创建系统链接..."
+        if [ -f "/usr/local/bin/dl" ]; then
+            rm -f /usr/local/bin/dl
+        fi
+        ln -s "$script_path" /usr/local/bin/dl
+        chmod +x /usr/local/bin/dl
+        echo "✓ 系统链接已创建！现在可以使用 'dl' 命令直接启动脚本！"
     else
         echo "✗ dl.sh脚本下载失败，跳过覆盖！"
     fi
@@ -565,7 +581,7 @@ EOF
     echo "========================================"
     echo "========================================"
     echo "      感谢使用，再见！"
-    echo "下次如需使用，输入代码：   ./dl.sh"
+    echo "下次如需使用，输入代码：   dL"
     echo "更多好码：https://Cnp.Cc"
     echo "========================================"
     
@@ -603,7 +619,7 @@ main() {
             0)
                 echo "========================================"
                 echo "      感谢使用，再见！"
-                echo "下次如需使用，输入代码：   ./dl.sh"
+                echo "下次如需使用，输入代码：   dL"
                 echo "更多好码：https://Cnp.Cc"
                 echo "========================================"
                 exit 0
